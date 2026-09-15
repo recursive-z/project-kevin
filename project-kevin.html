@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="civic-light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Kevin — Directory / CRM Prototype · State Affairs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   1. TOKENS — CivicUI 2.0 "Civic Light" (green + parchment)
+   Values sourced from the State Affairs design-token package.
+   ============================================================ */
+:root{
+  /* brand / accent */
+  --brand:#497059; --brand-hover:#3A5749; --brand-soft:#E7EDE9; --brand-tint:#DCE6DF;
+  --gold:#B8922A; --gold-soft:#F2E7C7; --gold-line:#E4C86A;
+  /* surfaces */
+  --bg:#F8F5EC; --bg-2:#F0EAE1; --surface:#FFFFFF; --contrast:#3A322A;
+  --sidebar-bg:#F2ECDF; --sidebar-active:#E4DBC7;
+  /* text */
+  --text:#191510; --text-muted:#6F6656; --text-faint:#948A77; --on-brand:#FFFFFF;
+  /* lines */
+  --border:#CFC1A8; --border-soft:#E4DBCB; --focus:#191510;
+  /* status */
+  --danger:#DC2626; --success:#14803B; --warning:#A16207;
+  /* noun accent dots */
+  --n-bill:#2C9F6E; --n-hearing:#B23FC0; --n-news:#5457D6; --n-note:#0A94A8;
+  /* party */
+  --dem-bg:#CBD8E8; --dem-tx:#1D2A3A; --rep-bg:#FBD3DA; --rep-tx:#86123F;
+  --ind-bg:#DED8C9; --ind-tx:#33291B; --third-bg:#DBCDEB; --third-tx:#5B2A86;
+  /* geometry */
+  --r:2px; --r-pill:999px; --navbar-h:56px; --sidebar-w:224px;
+  --shadow-xs:0 1px 2px rgba(40,32,18,.06); --shadow:0 2px 8px rgba(40,32,18,.10);
+  --shadow-lg:0 10px 30px rgba(40,32,18,.18);
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --serif:Georgia,'Times New Roman',serif;
+  --workspace-bg:#E5E0D4; --frame-width:1440px; --frame-chrome:96px;
+}
+
+/* ============================================================
+   2. RESET / BASE
+   ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--text);background:var(--workspace-bg);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--text)}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4,h5{margin:0;font-weight:600}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#c9bfa8;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+[hidden]{display:none!important}
+
+/* ============================================================
+   3. WORKSPACE + VIEWPORT FRAME  (house prototyping pattern)
+   ============================================================ */
+.workspace{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;gap:12px}
+.frame-toolbar{width:var(--frame-width);max-width:100%;display:flex;align-items:center;gap:10px;font-size:12px;color:#5c5344;flex-wrap:wrap}
+.frame-toolbar .brandtag{font-weight:700;letter-spacing:.02em;color:#4a4230;display:flex;align-items:center;gap:7px}
+.frame-toolbar .brandtag .dot{width:9px;height:9px;border-radius:50%;background:var(--brand)}
+.tb-group{display:flex;align-items:center;gap:4px;background:#efe9dc;border:1px solid #d8cfb9;border-radius:var(--r-pill);padding:3px}
+.tb-btn{font-size:12px;padding:4px 10px;border-radius:var(--r-pill);color:#5c5344;white-space:nowrap}
+.tb-btn:hover{background:#e2d9c3}
+.tb-btn.active{background:var(--brand);color:#fff}
+.tb-sep{width:1px;height:18px;background:#d3cab4;margin:0 2px}
+.tb-toggle{display:flex;align-items:center;gap:7px;font-size:12px;color:#5c5344;cursor:pointer;user-select:none}
+.switch{width:34px;height:18px;border-radius:999px;background:#cfc4ac;position:relative;transition:background .15s;flex:0 0 auto}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:var(--shadow-xs)}
+.tb-toggle.on .switch{background:var(--gold)}
+.tb-toggle.on .switch::after{left:18px}
+.jump{position:relative}
+.jump-menu{position:absolute;top:30px;left:0;z-index:60;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);padding:6px;min-width:220px;display:none}
+.jump-menu.open{display:block}
+.jump-menu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7px 9px;border-radius:4px;font-size:13px;color:var(--text)}
+.jump-menu button:hover{background:var(--brand-soft)}
+.jump-menu .grp{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:8px 9px 3px;font-weight:600}
+.jump-menu .ic{width:15px;height:15px;color:var(--text-muted)}
+
+.viewport-frame{width:var(--frame-width);max-width:100%;height:calc(100vh - var(--frame-chrome));background:var(--bg);
+  border:1px solid #c7bda6;border-radius:6px;box-shadow:var(--shadow-lg);overflow:hidden;position:relative}
+.frame-content{height:100%;overflow:hidden}
+
+/* ============================================================
+   4. APP SHELL — sidebar + navbar + views
+   ============================================================ */
+.shell{display:flex;height:100%;background:var(--bg);overflow:hidden}
+.sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-head{height:var(--navbar-h);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 0 16px;border-bottom:1px solid var(--border-soft)}
+.wordmark{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.01em;color:var(--text);display:flex;align-items:baseline;gap:5px;cursor:pointer}
+.wordmark .amp{color:var(--text)}
+.sb-scroll{flex:1;overflow-y:auto;padding:8px 8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r);color:#4c4433;font-size:13px;font-weight:500;cursor:pointer;position:relative}
+.nav-item:hover{background:var(--sidebar-active)}
+.nav-item.active{background:var(--sidebar-active);color:var(--text);font-weight:600}
+.nav-item.active::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--brand)}
+.nav-item .ic{width:17px;height:17px;flex:0 0 auto;color:#6b6250}
+.nav-item.active .ic{color:var(--brand)}
+.nav-item .chev{margin-left:auto;width:15px;height:15px;color:#9a9078}
+.nav-item .tag-new{margin-left:auto;font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.05em;background:#efe1f7;color:#6a2a97;padding:1px 4px;border-radius:3px}
+.nav-sub{padding:2px 0 4px 30px;display:flex;flex-direction:column}
+.nav-subitem{padding:6px 10px;border-radius:var(--r);font-size:12.5px;color:#5c5344;cursor:pointer}
+.nav-subitem:hover{background:var(--sidebar-active)}
+.nav-subitem.active{background:var(--brand-soft);color:var(--brand);font-weight:600}
+.nav-item.disabled,.nav-subitem.disabled{color:#b3a992;cursor:default;pointer-events:none}
+.nav-item.disabled .ic{color:#c9bfa8}
+.is-off{opacity:.4;pointer-events:none;cursor:default;filter:grayscale(.5)}
+.nav-sep{height:1px;background:var(--border-soft);margin:8px 6px}
+.sb-foot{padding:10px;border-top:1px solid var(--border-soft)}
+.askai{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border-radius:var(--r);background:var(--contrast);color:#f4efe3;font-weight:600;font-size:13px}
+.askai:hover{background:#2e2820}
+.askai .ic{width:16px;height:16px;color:var(--gold-line)}
+.askai .beta{margin-left:auto;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;background:rgba(228,200,106,.2);color:var(--gold-line);padding:1px 5px;border-radius:3px}
+
+/* sidebar collapse to icon rail */
+.sidebar{transition:width .16s,flex-basis .16s}
+.sb-collapse{width:30px;height:30px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex:0 0 auto}
+.sb-collapse:hover{background:var(--bg-2)}
+.sb-collapse .ic{width:17px;height:17px}
+.shell.sb-collapsed .sidebar{width:56px;flex:0 0 56px}
+.shell.sb-collapsed .sb-head{padding:0;justify-content:center}
+.shell.sb-collapsed .wordmark{display:none}
+.shell.sb-collapsed .sb-scroll{padding:8px 6px 0}
+.shell.sb-collapsed .nav-item{justify-content:center;gap:0;font-size:0;padding:9px 0}
+.shell.sb-collapsed .nav-item .chev,.shell.sb-collapsed .nav-item .tag-new{display:none}
+.shell.sb-collapsed .nav-item.active::before{top:4px;bottom:4px}
+.shell.sb-collapsed .nav-sub{display:none}
+.shell.sb-collapsed .nav-sep{margin:8px 12px}
+.shell.sb-collapsed .askai{justify-content:center;gap:0;font-size:0;padding:10px 0}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.navbar{height:var(--navbar-h);flex:0 0 var(--navbar-h);border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:12px;padding:0 16px}
+.nb-search{flex:0 1 420px;display:flex;align-items:center;gap:8px;height:38px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);padding:0 16px;color:var(--text-muted)}
+.nb-search .ic{width:16px;height:16px}
+.nb-search input{border:none;outline:none;background:none;flex:1;font-size:13px}
+.nb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.nb-icon{width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#5c5344}
+.nb-icon:hover{background:var(--bg-2)}
+.nb-icon .ic{width:18px;height:18px}
+.nb-user{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;font-family:var(--mono)}
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+
+.view{display:none}
+[data-view="directory"] .view-directory{display:block}
+[data-view="profile"]   .view-profile{display:block}
+[data-view="tracklist"] .view-tracklist{display:block}
+[data-view="bill"]      .view-bill{display:block}
+[data-view="chat"]      .view-chat{display:flex}
+[data-view="campaigns"] .view-campaigns{display:block}
+[data-view="admin"]     .view-admin{display:block}
+
+/* ============================================================
+   5. PRIMITIVES
+   ============================================================ */
+.page{padding:20px 28px 60px}
+.page-wide{max-width:1180px;margin:0 auto}
+.breadcrumb{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);margin-bottom:12px;font-family:var(--mono)}
+.breadcrumb .sep{color:var(--text-faint)}
+.breadcrumb .cur{color:var(--text);font-weight:600}
+.crumb-link{cursor:pointer}
+.crumb-link:hover{text-decoration:underline}
+.page-title{font-size:22px;font-weight:600;font-family:var(--serif)}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.subtle{color:var(--text-muted)}
+.muted-sm{font-size:12px;color:var(--text-muted)}
+.sectionlabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);font-weight:600;font-family:var(--mono)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-xs)}
+.card-pad{padding:18px}
+.card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border-soft)}
+.card-head h3{font-size:14px}
+.card-head .ic{width:16px;height:16px;color:var(--text-muted)}
+.card-head .head-action{margin-left:auto}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:var(--r);font-size:13px;font-weight:600;border:1px solid transparent;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn .ic{width:16px;height:16px}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-outline{background:var(--surface);border-color:var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg-2)}
+.btn-ghost{color:var(--text);background:transparent}
+.btn-ghost:hover{background:var(--bg-2)}
+.btn-gold{background:var(--gold-soft);border-color:var(--gold-line);color:#7a5f14}
+.btn-gold:hover{background:#eddcae}
+.btn-tracked{background:#e6f2ec;border-color:#bcd8c5;color:#1c6b38}
+.btn-tracked:hover{background:#d9ebe0}
+.btn-sm{height:30px;padding:0 10px;font-size:12px}
+.btn-xs{height:26px;padding:0 8px;font-size:11px;gap:5px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);display:inline-flex;align-items:center;justify-content:center}
+.btn-icon:hover{background:var(--bg-2)}
+.btn-icon .ic{width:16px;height:16px;color:var(--text-muted)}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);text-transform:uppercase;font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 7px;border-radius:var(--r);border:1px solid transparent;line-height:1.3;white-space:nowrap}
+.badge .ic{width:11px;height:11px}
+.badge-party-dem{background:var(--dem-bg);color:var(--dem-tx)}
+.badge-party-rep{background:var(--rep-bg);color:var(--rep-tx)}
+.badge-party-ind{background:var(--ind-bg);color:var(--ind-tx)}
+.badge-party-third{background:var(--third-bg);color:var(--third-tx)}
+.badge-industry{background:#e4dcc9;color:#5c4a25}
+.badge-state{background:var(--bg-2);color:var(--text-muted);border-color:var(--border-soft)}
+.badge-tier-champion{background:#e8f0e9;color:#2c5e40;border-color:#bcd6c5}
+.badge-tier-bet{background:var(--gold-soft);color:#7a5f14;border-color:var(--gold-line)}
+.badge-tier-watch{background:var(--bg-2);color:var(--text-muted);border-color:var(--border-soft)}
+.badge-ai{background:var(--gold-soft);color:#7a5f14;border-color:var(--gold-line);cursor:pointer}
+.badge-new{background:#efe1f7;color:#6a2a97;border-color:#d9bfe9}
+.badge-pos-support{background:#e2f0e6;color:#1c6b38;border-color:#bcd8c5}
+.badge-pos-oppose{background:#fbdfe3;color:#8a1938;border-color:#f0c2ca}
+.badge-pos-amend{background:#f6ecd4;color:#7a5f14;border-color:#e6d3a3}
+.badge-pos-neutral{background:var(--bg-2);color:var(--text-muted);border-color:var(--border-soft)}
+.badge-pos-watch{background:#e7ecf3;color:#3f5573;border-color:#c9d5e5}
+.prio{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;text-transform:uppercase;background:#f4ecdb;border:1px solid #e2d3ab;border-radius:var(--r);padding:2px 8px;color:#5c4a25}
+.prio .dot{width:8px;height:8px;border-radius:50%}
+.prio-high .dot{background:#dc2626}.prio-med .dot{background:#e08b1e}.prio-low .dot{background:#3f9e5a}.prio-dead .dot{background:#9a9078}
+
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--r-pill);padding:3px 10px;font-size:12px;color:var(--text)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--brand-soft);color:#3b5546;border:1px solid var(--brand-tint);border-radius:var(--r);padding:2px 8px;font-size:12px}
+.chip-bill{background:#e6f2ec;border-color:#c4e0d1;color:#1f6b46;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;border-radius:var(--r);border:1px solid;padding:2px 7px;display:inline-flex;align-items:center;gap:5px}
+.chip-person{background:#fff;border:1px solid var(--border);border-radius:var(--r-pill);padding:2px 9px 2px 3px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
+.dot-noun{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+
+.avatar{border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;flex:0 0 auto;text-transform:uppercase}
+.avatar.sq{border-radius:var(--r)}
+.av-24{width:24px;height:24px;font-size:9px}
+.av-32{width:32px;height:32px;font-size:11px}
+.av-40{width:40px;height:40px;font-size:13px}
+.av-64{width:64px;height:64px;font-size:20px}
+.av-alt{background:#8a6d3b}.av-alt2{background:#5c6b7a}.av-alt3{background:#7a4b52}.av-alt4{background:#4b6b62}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{padding:9px 14px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tab .lk{width:12px;height:12px;color:var(--text-faint)}
+
+.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fchip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--border);background:var(--surface);border-radius:var(--r-pill);font-size:12.5px;color:var(--text);cursor:pointer}
+.fchip:hover{background:var(--bg-2)}
+.fchip .ic{width:14px;height:14px;color:var(--text-muted)}
+.fchip.on{background:var(--brand-soft);border-color:var(--brand-tint);color:#3b5546}
+.seg{display:inline-flex;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-pill);padding:2px}
+.seg button{padding:5px 13px;font-size:12.5px;border-radius:var(--r-pill);color:var(--text-muted);font-weight:500}
+.seg button.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--shadow-xs)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl thead th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-2)}
+.tbl tbody td{padding:11px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+.tbl tbody tr.clickrow{cursor:pointer}
+.tbl tbody tr.clickrow:hover{background:var(--brand-soft)}
+.tbl .nm{display:flex;align-items:center;gap:10px}
+.tbl .nm .who{font-weight:600}
+.tbl .nm .role{font-size:11.5px;color:var(--text-muted)}
+.cellstack{display:flex;flex-direction:column;gap:3px}
+
+.ai-val{display:inline-flex;align-items:center;gap:7px}
+.ai-pending{border:1px dashed var(--gold-line);background:repeating-linear-gradient(45deg,#fbf4e2,#fbf4e2 6px,#f7edd4 6px,#f7edd4 12px);color:#8a6d24;border-radius:var(--r);padding:2px 8px;font-size:12px;font-style:italic}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);font-family:var(--mono);font-weight:600}
+.stat .v{font-size:24px;font-weight:700;margin-top:4px;font-family:var(--serif)}
+.stat .d{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.stat .d.up{color:var(--success)}
+
+.two-col{display:grid;grid-template-columns:1fr 400px;gap:20px;align-items:start}
+.two-col-bill{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+.stack{display:flex;flex-direction:column}
+.row{display:flex;align-items:center}
+.wrap{flex-wrap:wrap}
+.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.gap16{gap:16px}.gap20{gap:20px}
+.mt6{margin-top:6px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.mb6{margin-bottom:6px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.grow{flex:1}
+
+.field{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft)}
+.field:last-child{border-bottom:none}
+.field .lbl{width:158px;flex:0 0 158px;font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.field .lbl .ic{width:13px;height:13px}
+.field .val{flex:1;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lock{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);text-transform:uppercase;color:var(--text-faint);background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:1px 5px}
+.lock .ic{width:10px;height:10px}
+.req-star{color:var(--danger);font-weight:700}
+
+.note{border:1px solid var(--border-soft);border-radius:var(--r);padding:12px;background:var(--surface)}
+.note+.note{margin-top:10px}
+.note-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.note-type{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);text-transform:uppercase;color:var(--n-note);font-weight:600}
+.note-time{margin-left:auto;font-size:11px;color:var(--text-faint)}
+.note-body{font-size:13px;color:#3a342a}
+.note-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+.billcard{border:1px solid var(--border-soft);border-radius:var(--r);padding:12px}
+.billcard+.billcard{margin-top:10px}
+.billcard .bnum{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--brand);cursor:pointer}
+.billcard .btitle{font-size:12.5px;color:#3a342a;margin-top:3px}
+
+.meeting{border:1px solid var(--border-soft);border-radius:var(--r);padding:12px}
+.meeting+.meeting{margin-top:10px}
+.prep{margin-top:10px;background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:var(--r);padding:11px 12px}
+.prep h5{font-size:11px;font-family:var(--mono);text-transform:uppercase;color:#7a5f14;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.prep ul{margin:0;padding-left:16px;font-size:12.5px;color:#4a4230}
+.prep li{margin:3px 0}
+.asset{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--r);padding:4px 9px;font-size:12px;background:var(--surface)}
+.asset .ic{width:13px;height:13px;color:var(--text-muted)}
+
+.prograil{display:flex;align-items:flex-start;gap:0;padding:6px 4px 2px}
+.pnode{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;text-align:center}
+.pnode .conn{position:absolute;top:8px;left:-50%;width:100%;height:2px;background:var(--border);z-index:0}
+.pnode:first-child .conn{display:none}
+.pnode .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:var(--surface);z-index:1;position:relative}
+.pnode.done .dot{background:var(--n-bill);border-color:var(--n-bill)}
+.pnode.done .conn{background:var(--n-bill)}
+.pnode.cur .dot{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+.pnode.cur .conn{background:linear-gradient(90deg,var(--n-bill),var(--border))}
+.pnode .plabel{font-size:10.5px;color:var(--text-muted);margin-top:7px;max-width:84px;line-height:1.25}
+.pnode.done .plabel,.pnode.cur .plabel{color:var(--text)}
+.pnode .pdate{font-size:9.5px;color:var(--text-faint);margin-top:2px;font-family:var(--mono)}
+
+.infostrip{display:flex;align-items:flex-start;gap:10px;background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:11px 13px}
+.infostrip .ic{width:16px;height:16px;color:var(--text-muted);margin-top:1px}
+
+.view-chat{flex-direction:column;height:100%}
+.chat-scroll{flex:1;overflow-y:auto;padding:20px 0}
+.chat-wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.chat-landing{max-width:720px;margin:5vh auto 0;text-align:center;padding:0 24px}
+.chat-landing h2{font-family:var(--serif);font-size:26px;margin-bottom:8px}
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;text-align:left}
+.prompt-card{border:1px solid var(--border);border-radius:var(--r);padding:14px;background:var(--surface);cursor:pointer;display:flex;gap:11px}
+.prompt-card:hover{border-color:var(--brand);background:var(--brand-soft)}
+.prompt-card .ic{width:18px;height:18px;color:var(--brand);flex:0 0 auto;margin-top:1px}
+.prompt-card .pc-t{font-weight:600;font-size:13px}
+.prompt-card .pc-d{font-size:12px;color:var(--text-muted);margin-top:2px}
+.msg{margin-bottom:22px}
+.msg-user{display:flex;justify-content:flex-end}
+.bubble-user{background:var(--brand);color:#fff;border-radius:12px 12px 3px 12px;padding:11px 15px;max-width:80%;font-size:14px}
+.msg-ai .ai-id{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.msg-ai .ai-id .mk{width:22px;height:22px;border-radius:50%;background:var(--contrast);display:flex;align-items:center;justify-content:center}
+.msg-ai .ai-id .mk .ic{width:13px;height:13px;color:var(--gold-line)}
+.msg-ai .ai-id .nm{font-weight:600;font-size:13px}
+.msg-ai .ai-id .tm{font-size:11px;color:var(--text-faint)}
+.ai-body{font-size:14px;color:#2a2519;line-height:1.6}
+.ai-body p{margin:0 0 11px}
+.ai-body strong{font-weight:600}
+.ai-body a{border-bottom:1px solid var(--brand-tint)}
+.ai-body ul{margin:6px 0 12px;padding-left:20px}
+.ai-body li{margin:5px 0}
+.ai-actions{display:flex;align-items:center;gap:4px;margin-top:6px}
+.ai-src{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--r);padding:10px 12px;margin:10px 0 2px}
+.ai-src .st{font-size:10px;font-family:var(--mono);text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:7px}
+.composer{border-top:1px solid var(--border);padding:14px 24px 18px;background:var(--bg)}
+.composer-inner{max-width:760px;margin:0 auto;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:10px 12px}
+.composer textarea{width:100%;border:none;outline:none;resize:none;min-height:44px;font-size:14px;background:none}
+.composer-bar{display:flex;align-items:center;gap:7px;margin-top:6px}
+.composer-bar .btn{margin-left:auto}
+
+/* docked AI chat (left of profile content) */
+.main-body{flex:1;display:flex;overflow:hidden;min-height:0}
+.chat-dock{width:352px;flex:0 0 352px;border-right:1px solid var(--border);background:var(--surface);display:none;flex-direction:column;overflow:hidden}
+[data-view="profile"] .chat-dock{display:flex}
+.dock-collapsed .chat-dock{display:none}
+.dock-head{padding:11px 13px;border-bottom:1px solid var(--border-soft);background:var(--bg)}
+.dock-title{display:flex;align-items:center;gap:8px}
+.dock-title .mk{width:22px;height:22px;border-radius:50%;background:var(--contrast);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.dock-title .mk .ic{width:12px;height:12px;color:var(--gold-line)}
+.dock-title b{font-size:13px}
+.dock-title .beta{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.06em;background:var(--gold-soft);color:#7a5f14;padding:1px 5px;border-radius:3px}
+.dock-title .dock-x{margin-left:auto;width:26px;height:26px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+.dock-title .dock-x:hover{background:var(--bg-2)}
+.dock-title .dock-x .ic{width:15px;height:15px}
+.dock-ctx{margin-top:9px;display:flex;align-items:center;gap:7px;background:var(--brand-soft);border:1px solid var(--brand-tint);border-radius:var(--r);padding:5px 8px;font-size:11.5px;color:#3b5546}
+.dock-ctx .ic{width:13px;height:13px;flex:0 0 auto}
+.dock-scroll{flex:1;overflow-y:auto;padding:14px}
+.dock-hero{font-family:var(--serif);font-size:16px;font-weight:600;margin-bottom:4px}
+.dock-sub{font-size:12px;color:var(--text-muted);margin-bottom:14px}
+.dock-prompt{display:flex;gap:9px;border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;background:var(--surface);cursor:pointer;margin-bottom:8px}
+.dock-prompt:hover{border-color:var(--brand);background:var(--brand-soft)}
+.dock-prompt .ic{width:15px;height:15px;color:var(--brand);flex:0 0 auto;margin-top:1px}
+.dock-prompt .dp-t{font-size:12.5px;font-weight:600;line-height:1.3}
+.chat-dock .msg{margin-bottom:16px}
+.chat-dock .bubble-user{font-size:13px;padding:9px 12px;border-radius:11px 11px 3px 11px;max-width:88%}
+.chat-dock .ai-body{font-size:13px;line-height:1.55}
+.chat-dock .ai-body p{margin:0 0 9px}
+.chat-dock .ai-body ul{padding-left:17px;margin:6px 0 9px}
+.chat-dock .ai-body li{margin:6px 0}
+.chat-dock .ai-src{padding:8px 10px}
+.dock-composer{border-top:1px solid var(--border-soft);padding:10px 12px;background:var(--bg)}
+.dock-composer-inner{border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:8px 10px}
+.dock-composer textarea{width:100%;border:none;outline:none;resize:none;min-height:38px;font-size:13px;background:none}
+.dock-composer-bar{display:flex;align-items:center;gap:6px;margin-top:4px}
+.dock-composer-bar .btn{margin-left:auto}
+.reopen-dock{display:none}
+.dock-collapsed .reopen-dock{display:inline-flex}
+.dock-collapsed #dockHideBtn{display:none}
+
+/* ============================================================
+   6. OVERLAYS — modals, slide-in, popover, toast
+   ============================================================ */
+.overlay{position:absolute;inset:0;background:rgba(30,24,12,.34);z-index:80;display:none;align-items:flex-start;justify-content:center;padding-top:6vh}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);width:560px;max-width:92%;max-height:84%;display:flex;flex-direction:column;overflow:hidden}
+.modal.wide{width:680px}
+.modal-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+.modal-head h3{font-size:16px;font-family:var(--serif)}
+.modal-head .x{margin-left:auto;width:30px;height:30px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+.modal-head .x:hover{background:var(--bg-2)}
+.modal-body{padding:20px;overflow-y:auto}
+.modal-foot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--border-soft);background:var(--bg)}
+.modal-foot .spacer{flex:1}
+.steps{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.step{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-faint)}
+.step .n{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--mono)}
+.step.active{color:var(--text);font-weight:600}
+.step.active .n{background:var(--brand);color:#fff;border-color:var(--brand)}
+.step.done .n{background:var(--n-bill);color:#fff;border-color:var(--n-bill)}
+.step-line{flex:1;height:1px;background:var(--border)}
+.dropzone{border:2px dashed var(--border);border-radius:var(--r);padding:24px;text-align:center;color:var(--text-muted);background:var(--bg-2)}
+.dropzone .ic{width:26px;height:26px;color:var(--text-faint)}
+.maprow{display:grid;grid-template-columns:1fr 18px 1fr;align-items:center;gap:10px;padding:6px 0}
+.formlabel{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:5px;display:block}
+.input{width:100%;height:36px;border:1px solid var(--border);border-radius:var(--r);padding:0 11px;background:var(--surface);outline:none}
+.input:focus{border-color:var(--brand)}
+textarea.input{height:auto;padding:9px 11px;resize:vertical}
+.select{width:100%;height:36px;border:1px solid var(--border);border-radius:var(--r);padding:0 8px;background:var(--surface)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fitem{margin-bottom:14px}
+.checkline{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--border-soft);border-radius:var(--r);margin-bottom:7px;cursor:pointer}
+.checkline:hover{background:var(--bg-2)}
+.checkline input{width:15px;height:15px;accent-color:var(--brand)}
+.checkline .ic{width:15px;height:15px;color:var(--text-muted)}
+.toggle-sm{width:32px;height:18px;border-radius:999px;background:#cfc4ac;position:relative;flex:0 0 auto;cursor:pointer;transition:background .15s}
+.toggle-sm::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle-sm.on{background:var(--brand)}
+.toggle-sm.on::after{left:16px}
+
+.slidein{position:absolute;top:0;right:0;bottom:0;width:440px;max-width:90%;background:var(--surface);border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(40,32,18,.16);z-index:85;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column}
+.slidein.open{transform:translateX(0)}
+.slidein-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--border-soft)}
+.slidein-head h3{font-size:15px;font-family:var(--serif)}
+.slidein-head .x{margin-left:auto;width:30px;height:30px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+.slidein-head .x:hover{background:var(--bg-2)}
+.slidein-body{padding:18px;overflow-y:auto;flex:1}
+.slidein-foot{padding:13px 18px;border-top:1px solid var(--border-soft);display:flex;gap:10px;background:var(--bg)}
+
+.popover{position:fixed;z-index:200;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);width:340px;padding:14px;display:none}
+.popover.open{display:block}
+.popover h4{font-size:12px;font-family:var(--mono);text-transform:uppercase;color:var(--text-faint);margin-bottom:9px}
+.srcline{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--border-soft);font-size:12.5px}
+.srcline:first-of-type{border-top:none}
+.srcline .ic{width:14px;height:14px;flex:0 0 auto;margin-top:2px;color:var(--brand)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--contrast);color:#f4efe3;padding:12px 18px;border-radius:6px;box-shadow:var(--shadow-lg);z-index:300;display:flex;align-items:center;gap:10px;font-size:13px;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .ic{width:16px;height:16px;color:var(--gold-line)}
+
+.show-new .hl-new{position:relative;outline:2px dashed var(--gold);outline-offset:3px;border-radius:var(--r)}
+.show-new .hl-new::after{content:"NEW";position:absolute;top:-9px;right:-6px;background:var(--gold);color:#fff;font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.05em;padding:1px 4px;border-radius:3px;z-index:5}
+.hl-legend{display:none;align-items:center;gap:6px;font-size:11px;color:#7a5f14}
+.show-new .hl-legend{display:inline-flex}
+
+.proto-note{position:fixed;top:14px;right:14px;background:var(--contrast);color:#fff;font-size:13px;line-height:1.5;padding:9px 13px;border-radius:8px;z-index:400;cursor:grab;opacity:.96;max-width:370px;width:max-content;box-shadow:var(--shadow-lg);user-select:none}
+.proto-note.dragging{cursor:grabbing}
+.proto-note-header{display:flex;align-items:center;gap:9px}
+.proto-note-eyebrow{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold-line);flex:0 0 auto}
+.proto-note-ticket{font-size:11px;font-weight:600;color:rgba(255,255,255,.8);flex:1}
+.proto-note-toggle{font-size:10px;opacity:.6;flex:0 0 auto}
+.proto-note-body{display:none;margin-top:10px;max-width:330px}
+.proto-note:not(.collapsed) .proto-note-body{display:block}
+.proto-note-row{display:flex;gap:11px;margin-bottom:7px}
+.proto-note-row:last-child{margin-bottom:0}
+.proto-note-label{font-weight:600;white-space:nowrap;flex:0 0 auto;min-width:58px;color:#fff}
+.proto-note-text{color:rgba(255,255,255,.72)}
+
+@media (max-width:1120px){.two-col,.two-col-bill{grid-template-columns:1fr}.prompt-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="workspace" id="workspace">
+
+  <!-- ===== FRAME TOOLBAR (prototype controls — outside the design) ===== -->
+  <div class="frame-toolbar">
+    <span class="brandtag"><span class="dot"></span>State Affairs · Project Kevin</span>
+    <div class="jump">
+      <button class="tb-btn" id="jumpBtn"><i data-lucide="compass" class="ic" style="width:14px;height:14px;vertical-align:-2px"></i> Jump to flow ▾</button>
+      <div class="jump-menu" id="jumpMenu">
+        <div class="grp">Directory / CRM</div>
+        <button data-jump="directory"><i data-lucide="user-search" class="ic"></i> Directory list</button>
+        <button data-jump="profile"><i data-lucide="id-card" class="ic"></i> Profile — Sen. Ramirez</button>
+        <button data-jump="import"><i data-lucide="upload" class="ic"></i> Bulk import contacts (CSV)</button>
+        <div class="grp">Entity relationships</div>
+        <button data-jump="tracklist"><i data-lucide="scroll-text" class="ic"></i> Tracking list — Profiles view</button>
+        <button data-jump="bill"><i data-lucide="file-text" class="ic"></i> Bill — auto-matched people</button>
+        <button data-jump="chat"><i data-lucide="sparkles" class="ic"></i> AI Chat — query profiles</button>
+        <div class="grp">Campaigns & Admin</div>
+        <button data-jump="campaigns"><i data-lucide="megaphone" class="ic"></i> Campaigns</button>
+        <button data-jump="admin"><i data-lucide="shield" class="ic"></i> Permissioning &amp; integrations</button>
+      </div>
+    </div>
+    <span class="tb-sep"></span>
+    <span>Viewport</span>
+    <div class="tb-group">
+      <button class="tb-btn" data-w="1280">1280</button>
+      <button class="tb-btn active" data-w="1440">1440</button>
+      <button class="tb-btn" data-w="1920">1920</button>
+    </div>
+    <span class="tb-sep"></span>
+    <div class="tb-toggle" id="hlToggle"><span class="switch"></span> Highlight new features</div>
+    <span class="hl-legend"><i data-lucide="sparkles" class="ic" style="width:12px;height:12px"></i> dashed gold = net-new in Project Kevin</span>
+  </div>
+
+  <!-- ===== VIEWPORT FRAME (the design canvas) ===== -->
+  <div class="viewport-frame">
+    <div class="frame-content">
+      <div class="shell" id="shell" data-view="directory">
+
+        <!-- ---------- SIDEBAR ---------- -->
+        <aside class="sidebar">
+          <div class="sb-head">
+            <div class="wordmark" data-nav="directory"><span class="wm-full">State <span class="amp">Affairs</span></span></div>
+            <button class="sb-collapse" id="sbToggle" title="Collapse menu"><i data-lucide="panel-left" class="ic"></i></button>
+          </div>
+          <nav class="sb-scroll">
+            <div class="nav-item disabled"><i data-lucide="newspaper" class="ic"></i> News</div>
+            <div class="nav-item disabled"><i data-lucide="layout-dashboard" class="ic"></i> Dashboard</div>
+            <div class="nav-sep"></div>
+            <div class="nav-item" id="btNav"><i data-lucide="scroll-text" class="ic"></i> Bill Tracking <i data-lucide="chevron-down" class="chev"></i></div>
+            <div class="nav-sub" id="btSub">
+              <div class="nav-subitem disabled">Recommended Bills</div>
+              <div class="nav-subitem disabled">All Bills</div>
+              <div class="nav-subitem" data-nav="tracklist">Tracking Lists</div>
+              <div class="nav-subitem disabled">Actions by Date</div>
+            </div>
+            <div class="nav-item disabled"><i data-lucide="rotate-3d" class="ic"></i> 360 Views</div>
+            <div class="nav-item disabled"><i data-lucide="sticky-note" class="ic"></i> Field Notes</div>
+            <div class="nav-item disabled"><i data-lucide="key-round" class="ic"></i> Keyword Alerts</div>
+            <div class="nav-item disabled"><i data-lucide="landmark" class="ic"></i> Hearings</div>
+            <div class="nav-item active" data-nav="directory"><i data-lucide="user-search" class="ic"></i> Directory</div>
+            <div class="nav-item" data-nav="campaigns"><i data-lucide="megaphone" class="ic"></i> Campaigns</div>
+            <div class="nav-item disabled"><i data-lucide="calendar" class="ic"></i> Schedules</div>
+            <div class="nav-item disabled"><i data-lucide="file-text" class="ic"></i> Reports</div>
+          </nav>
+          <div class="sb-foot">
+            <button class="askai" data-nav="chat"><i data-lucide="sparkles" class="ic"></i> Ask AI</button>
+          </div>
+        </aside>
+
+        <!-- ---------- MAIN ---------- -->
+        <div class="main">
+          <div class="navbar">
+            <div class="nb-search"><i data-lucide="search" class="ic"></i><input placeholder="Search bills, people, hearings…"></div>
+            <div class="nb-right">
+              <button class="nb-icon is-off" title="Notifications"><i data-lucide="bell" class="ic"></i></button>
+              <button class="nb-icon" data-nav="admin" title="Admin &amp; settings"><i data-lucide="settings" class="ic"></i></button>
+              <button class="nb-icon is-off" title="Theme"><i data-lucide="sun" class="ic"></i></button>
+              <div class="nb-user">AC</div>
+            </div>
+          </div>
+
+          <div class="main-body">
+
+          <!-- ===== DOCKED AI CHAT (contextual to the open profile) ===== -->
+          <aside class="chat-dock hl-new" id="chatDock">
+            <div class="dock-head">
+              <div class="dock-title">
+                <span class="mk"><i data-lucide="sparkles" class="ic"></i></span>
+                <b>Ask AI</b><span class="beta">Beta</span>
+                <button class="dock-x" id="dockHideBtn" title="Hide panel"><i data-lucide="panel-left-close" class="ic"></i></button>
+              </div>
+              <div class="dock-ctx"><i data-lucide="user-search" class="ic"></i> In context of <strong style="font-weight:600">&nbsp;Sen. Maria Ramirez</strong></div>
+            </div>
+            <div class="dock-scroll">
+              <div id="dockLanding">
+                <div class="dock-hero">Strategize on Sen. Ramirez</div>
+                <div class="dock-sub">Grounded in her profile, stances, tracked bills and your field notes.</div>
+                <div class="dock-prompt" data-dprompt><i data-lucide="sparkles" class="ic"></i><div class="dp-t">How should I approach her on AB 1234?</div></div>
+                <div class="dock-prompt" data-dprompt><i data-lucide="notebook-pen" class="ic"></i><div class="dp-t">Draft talking points for Friday's meeting</div></div>
+                <div class="dock-prompt" data-dprompt><i data-lucide="shield-alert" class="ic"></i><div class="dp-t">What objections is she likely to raise?</div></div>
+                <div class="dock-prompt" data-dprompt><i data-lucide="users" class="ic"></i><div class="dp-t">Who on our team should make the ask?</div></div>
+              </div>
+              <div id="dockThread" hidden>
+                <div class="msg msg-user"><div class="bubble-user">How should I approach Sen. Ramirez on AB 1234?</div></div>
+                <div class="msg msg-ai">
+                  <div class="ai-id"><span class="mk"><i data-lucide="sparkles" class="ic"></i></span><span class="nm">State Affairs AI</span><span class="tm">just now</span></div>
+                  <div class="ai-body">
+                    <p>She's already your <strong>Champion</strong> and the bill's sponsor — the goal isn't to persuade her, it's to <strong>arm her</strong> for the floor vote.</p>
+                    <ul>
+                      <li><strong>Lead with what she asked for.</strong> On the Sep 9 call she wanted Fresno jobs data — bring the CA figures (<strong>12,400 jobs, $2.1B</strong>).</li>
+                      <li><strong>Use your warmest path.</strong> <strong>Priya Shah</strong> has the relationship (4 meetings) — have her make the ask, not a cold outreach.</li>
+                      <li><strong>Close the open thread.</strong> She's waiting on grid-interconnection amendment text — deliver it before Friday.</li>
+                      <li><strong>Don't muddy it.</strong> Keep <a data-nav="bill">SB 302</a> (digital tax) out of this — she's cool on it and it risks the jobs message.</li>
+                    </ul>
+                    <p>Net: a <strong>confirmation &amp; logistics</strong> meeting, not a persuasion one.</p>
+                    <div class="ai-src"><div class="st">Drawn from</div>
+                      <div class="row gap6 wrap"><span class="chip-person"><span class="avatar av-24">MR</span> Ramirez</span><span class="chip-bill">AB 1234</span><span class="pill"><i data-lucide="sticky-note" class="ic" style="width:12px;height:12px"></i> 6 notes</span><span class="pill"><i data-lucide="database" class="ic" style="width:12px;height:12px"></i> CA data</span></div>
+                    </div>
+                    <div class="ai-actions"><button class="btn-icon btn-sm" style="border:none;background:none" title="Copy"><i data-lucide="copy" class="ic"></i></button><button class="btn-icon btn-sm" style="border:none;background:none" title="Good"><i data-lucide="thumbs-up" class="ic"></i></button><button class="btn-icon btn-sm" style="border:none;background:none" title="Bad"><i data-lucide="thumbs-down" class="ic"></i></button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="dock-composer">
+              <div class="dock-composer-inner">
+                <textarea placeholder="Ask about Sen. Ramirez…"></textarea>
+                <div class="dock-composer-bar">
+                  <span class="fchip" style="height:26px;font-size:11px"><i data-lucide="user-search" class="ic"></i> This profile</span>
+                  <button class="btn btn-primary btn-sm" id="dockSend"><i data-lucide="send" class="ic"></i></button>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="main-scroll" id="mainScroll">
+
+            <!-- ============================================================
+                 VIEW 1 — DIRECTORY LIST
+                 ============================================================ -->
+            <section class="view view-directory">
+              <div class="page">
+                <div class="page-head">
+                  <div>
+                    <div class="page-title">Directory</div>
+                    <div class="muted-sm mt6">Legislators, staff &amp; your uploaded contacts — one place, connected to every bill, hearing and note.</div>
+                  </div>
+                  <div class="row gap8">
+                    <button class="btn btn-outline hl-new" id="importBtn"><i data-lucide="upload" class="ic"></i> Import contacts</button>
+                    <button class="btn btn-primary hl-new" id="addProfileBtn"><i data-lucide="plus" class="ic"></i> Add profile</button>
+                  </div>
+                </div>
+
+                <div class="row gap12 mb16 wrap">
+                  <div class="seg">
+                    <button class="active">All</button>
+                    <button>Legislators</button>
+                    <button class="hl-new">My contacts</button>
+                    <button>Staff</button>
+                  </div>
+                  <div class="filters grow">
+                    <div class="fchip"><i data-lucide="flag" class="ic"></i> Party</div>
+                    <div class="fchip on"><i data-lucide="landmark" class="ic"></i> Committee: Energy</div>
+                    <div class="fchip hl-new"><i data-lucide="sparkles" class="ic"></i> Relationship</div>
+                    <div class="fchip hl-new"><i data-lucide="sliders-horizontal" class="ic"></i> Fields</div>
+                  </div>
+                  <div class="seg" style="margin-left:auto">
+                    <button class="active"><i data-lucide="table" class="ic" style="width:14px;height:14px;vertical-align:-2px"></i></button>
+                    <button class="is-off"><i data-lucide="layout-grid" class="ic" style="width:14px;height:14px;vertical-align:-2px"></i></button>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <table class="tbl">
+                    <thead><tr>
+                      <th>Name</th><th>Role</th><th>Party</th><th>Committees</th>
+                      <th class="hl-new">Data Centers — Stance</th><th class="hl-new">Relationship</th>
+                      <th>Last interaction</th><th></th>
+                    </tr></thead>
+                    <tbody>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32">MR</div><div><div class="who">Sen. Maria Ramirez</div></div></div></td>
+                        <td class="muted-sm">State Senator · CA-14</td>
+                        <td><span class="badge badge-party-dem">Dem</span></td>
+                        <td><span class="chip">Energy, Utilities &amp; Communications</span></td>
+                        <td><span class="ai-val"><span>Supportive</span></span></td>
+                        <td><span class="badge badge-tier-champion">Champion</span></td>
+                        <td class="muted-sm">2d ago</td>
+                        <td><i data-lucide="lock" class="ic" style="width:14px;height:14px;color:var(--text-faint)" title="Restricted to GR Team"></i></td>
+                      </tr>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32 av-alt">DO</div><div><div class="who">David Osei</div></div></div></td>
+                        <td class="muted-sm">GR Director, Acme Semiconductor</td>
+                        <td><span class="badge badge-industry">Industry</span></td>
+                        <td class="muted-sm">—</td>
+                        <td><span class="ai-val"><span>Ally</span></span></td>
+                        <td><span class="badge badge-tier-champion">Champion</span></td>
+                        <td class="muted-sm">6d ago</td>
+                        <td><i data-lucide="lock" class="ic" style="width:14px;height:14px;color:var(--text-faint)"></i></td>
+                      </tr>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32 av-alt3">TB</div><div><div class="who">Rep. Thomas Beck</div></div></div></td>
+                        <td class="muted-sm">Assemblymember · CA-08</td>
+                        <td><span class="badge badge-party-rep">Rep</span></td>
+                        <td><span class="chip">Revenue &amp; Taxation</span></td>
+                        <td><span class="ai-val"><span>Opposed</span></span></td>
+                        <td><span class="badge badge-tier-watch">Watch</span></td>
+                        <td class="muted-sm">3w ago</td>
+                        <td></td>
+                      </tr>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32 av-alt2">PN</div><div><div class="who">Sen. Priya Nair</div></div></div></td>
+                        <td class="muted-sm">State Senator · CA-22</td>
+                        <td><span class="badge badge-party-dem">Dem</span></td>
+                        <td><span class="chip">Energy, Utilities &amp; Communications</span></td>
+                        <td><span class="ai-pending">Analyzing…</span></td>
+                        <td><span class="badge badge-tier-bet">Bet</span></td>
+                        <td class="muted-sm">Never</td>
+                        <td></td>
+                      </tr>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32 av-alt4">DF</div><div><div class="who">Asm. Dale Foster</div></div></div></td>
+                        <td class="muted-sm">Assemblymember · CA-04</td>
+                        <td><span class="badge badge-party-third">Independent</span></td>
+                        <td><span class="chip">Utilities &amp; Energy</span></td>
+                        <td><span class="ai-val"><span>Leaning yes</span></span></td>
+                        <td><span class="badge badge-tier-bet">Bet</span></td>
+                        <td class="muted-sm">5d ago</td>
+                        <td></td>
+                      </tr>
+                      <tr class="clickrow" data-nav="profile">
+                        <td><div class="nm"><div class="avatar av-32 av-alt">LO</div><div><div class="who">Lena Ortiz</div></div></div></td>
+                        <td class="muted-sm">State Policy Lead, TechNet</td>
+                        <td><span class="badge badge-industry">Trade assoc.</span></td>
+                        <td class="muted-sm">—</td>
+                        <td><span class="ai-val"><span>Supportive</span></span></td>
+                        <td><span class="badge badge-tier-watch">Watch</span></td>
+                        <td class="muted-sm">1w ago</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="muted-sm mt12">Showing 6 of 214 · <span class="hl-new">14 uploaded contacts auto-matched to existing bills &amp; hearings</span></div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 2 — PROFILE DETAIL (hero: Sen. Ramirez)
+                 ============================================================ -->
+            <section class="view view-profile">
+              <div class="page page-wide">
+                <div class="breadcrumb"><span class="crumb-link" data-nav="directory">DIRECTORY</span><span class="sep">/</span><span class="cur">MARIA RAMIREZ</span></div>
+
+                <!-- header card -->
+                <div class="card card-pad mb16">
+                  <div class="row gap16" style="align-items:flex-start">
+                    <div class="avatar av-64">MR</div>
+                    <div class="grow">
+                      <div class="row gap10 wrap" style="align-items:center">
+                        <div style="font-size:20px;font-weight:600">Sen. Maria Ramirez</div>
+                        <span class="badge badge-party-dem">Democrat</span>
+                        <span class="badge badge-state">CA-14</span>
+                        <span class="lock hl-new"><i data-lucide="lock" class="ic"></i> Visible to: GR Team</span>
+                      </div>
+                      <div class="muted-sm mt6">State Senator · Chair, Energy, Utilities &amp; Communications · Hometown: Fresno, CA</div>
+                      <div class="row gap16 wrap mt12 muted-sm">
+                        <span class="row gap6"><i data-lucide="building-2" class="ic" style="width:14px;height:14px"></i> Room 5080</span>
+                        <span class="row gap6"><i data-lucide="phone" class="ic" style="width:14px;height:14px"></i> (916) 651-4014</span>
+                        <span class="row gap6"><i data-lucide="mail" class="ic" style="width:14px;height:14px"></i> senator.ramirez@senate.ca.gov</span>
+                      </div>
+                    </div>
+                    <div class="row gap8">
+                      <button class="btn btn-outline btn-sm reopen-dock hl-new" id="dockReopen"><i data-lucide="sparkles" class="ic"></i> Ask AI</button>
+                      <button class="btn btn-outline btn-sm is-off"><i data-lucide="star" class="ic"></i> Following</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="two-col">
+                  <!-- LEFT: attributes + related bills -->
+                  <div class="stack gap16">
+                    <div class="card hl-new">
+                      <div class="card-head">
+                        <i data-lucide="sliders-horizontal" class="ic"></i><h3>Attributes</h3>
+                        <div class="head-action row gap8">
+                          <button class="btn btn-gold btn-sm" id="autofillBtn"><i data-lucide="sparkles" class="ic"></i> Auto-fill with AI</button>
+                          <button class="btn btn-outline btn-sm" id="addFieldBtn"><i data-lucide="plus" class="ic"></i> Add field</button>
+                        </div>
+                      </div>
+                      <div class="card-pad" style="padding-top:4px;padding-bottom:8px">
+                        <div class="field">
+                          <div class="lbl">Party</div><div class="val"><span class="badge badge-party-dem">Democrat</span></div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl">District</div><div class="val">CA-14 · Fresno</div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl"><i data-lucide="sparkles" class="ic" style="color:var(--gold)"></i> Data Centers — Stance</div>
+                          <div class="val"><strong>Supportive</strong>
+                            <span class="badge badge-ai" data-why="datacenters"><i data-lucide="sparkles" class="ic"></i> AI · Why?</span>
+                          </div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl"><i data-lucide="sparkles" class="ic" style="color:var(--gold)"></i> Digital Tax — Stance</div>
+                          <div class="val" id="digitalTaxVal"><span class="ai-pending">Not filled — run AI to suggest</span></div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl">Relationship</div>
+                          <div class="val"><span class="badge badge-tier-champion">Champion</span>
+                            <span class="muted-sm">— met 4×, co-hosted 1 roundtable</span></div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl">Owner</div>
+                          <div class="val"><span class="chip-person"><span class="avatar av-24 av-alt2">PS</span> Priya Shah</span></div>
+                        </div>
+                        <div class="field">
+                          <div class="lbl">Priority <span class="req-star" title="Required field">*</span></div>
+                          <div class="val"><span class="prio prio-high"><span class="dot"></span> High</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-head"><span class="dot-noun" style="background:var(--n-bill)"></span><h3>Related legislation</h3>
+                        <span class="muted-sm head-action hl-new">auto-matched</span></div>
+                      <div class="card-pad">
+                        <div class="billcard">
+                          <div class="row gap10" style="align-items:flex-start">
+                            <div class="grow">
+                              <span class="bnum" data-nav="bill">CA AB 1234</span>
+                              <span class="badge badge-pos-support" style="margin-left:8px">Support</span>
+                              <div class="btitle">Data Center Energy &amp; Jobs Act — sponsor</div>
+                            </div>
+                            <button class="btn btn-tracked btn-xs"><i data-lucide="bell" class="ic"></i> Tracked</button>
+                          </div>
+                        </div>
+                        <div class="billcard">
+                          <div class="row gap10" style="align-items:flex-start">
+                            <div class="grow">
+                              <span class="bnum" data-nav="bill">CA SB 302</span>
+                              <span class="badge badge-pos-watch" style="margin-left:8px">Watch</span>
+                              <div class="btitle">Digital Services Tax Act — committee member</div>
+                            </div>
+                            <button class="btn btn-outline btn-xs"><i data-lucide="bell" class="ic"></i> Track</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- RIGHT rail: field notes + meetings -->
+                  <div class="stack gap16">
+                    <div class="card">
+                      <div class="card-head"><span class="dot-noun" style="background:var(--n-note)"></span><h3>Field Notes</h3>
+                        <button class="btn btn-outline btn-sm head-action" id="addNoteBtn"><i data-lucide="plus" class="ic"></i> Add note</button></div>
+                      <div class="card-pad" id="noteList">
+                        <div class="note">
+                          <div class="note-top"><span class="note-type"><i data-lucide="phone" class="ic" style="width:11px;height:11px"></i> Call</span><span class="note-time">Sep 9</span></div>
+                          <div class="note-body">Ramirez confirmed she'll carry the amended AB 1234 language on grid interconnection. Wants jobs data for Fresno district before the floor vote.</div>
+                          <div class="note-links"><span class="chip-person"><span class="avatar av-24 av-alt2">PS</span> Priya Shah</span><span class="chip-bill" data-nav="bill"><span class="dot-noun" style="background:var(--n-bill)"></span>AB 1234</span></div>
+                        </div>
+                        <div class="note">
+                          <div class="note-top"><span class="note-type"><i data-lucide="users" class="ic" style="width:11px;height:11px"></i> Meeting</span><span class="note-time">Aug 21</span></div>
+                          <div class="note-body">Roundtable with Acme + TechNet. Ramirez supportive of siting reform; skeptical of the digital services tax (SB 302) — sees it as a jobs risk.</div>
+                          <div class="note-links"><span class="chip-person"><span class="avatar av-24 av-alt">DO</span> David Osei</span><span class="chip-bill" data-nav="bill"><span class="dot-noun" style="background:var(--n-bill)"></span>SB 302</span></div>
+                        </div>
+                        <div class="muted-sm mt8" style="text-align:center">Forward an email to <strong>notes@intuit.stateaffairs.com</strong> to log automatically</div>
+                      </div>
+                    </div>
+
+                    <div class="card hl-new">
+                      <div class="card-head"><i data-lucide="calendar" class="ic"></i><h3>Meetings</h3>
+                        <span class="badge badge-state head-action"><i data-lucide="calendar" class="ic"></i> Calendar synced</span></div>
+                      <div class="card-pad">
+                        <div class="meeting">
+                          <div class="row gap8" style="align-items:flex-start">
+                            <div class="grow">
+                              <div style="font-weight:600;font-size:13px">Prep before AB 1234 floor vote</div>
+                              <div class="muted-sm mt6"><i data-lucide="clock" class="ic" style="width:12px;height:12px;vertical-align:-2px"></i> Fri Sep 12, 10:30 AM · Capitol Rm 5080</div>
+                            </div>
+                            <button class="btn btn-gold btn-xs" id="prepBtn"><i data-lucide="sparkles" class="ic"></i> Prep me</button>
+                          </div>
+                          <div class="prep" id="prepBox" hidden>
+                            <h5><i data-lucide="sparkles" class="ic" style="width:12px;height:12px"></i> Meeting prep — objective: lock her floor vote</h5>
+                            <ul>
+                              <li><strong>Where she stands:</strong> Supportive on data centers (Champion); wants Fresno jobs figures — bring the CA business-data sheet (12,400 jobs).</li>
+                              <li><strong>Open thread:</strong> On the Sep 9 call she asked for grid-interconnection amendment text — Priya owns follow-up.</li>
+                              <li><strong>Watch-out:</strong> She's cool on SB 302 (digital tax); don't conflate the two asks.</li>
+                              <li><strong>Best relationship:</strong> Priya Shah (4 meetings). Loop her in.</li>
+                            </ul>
+                          </div>
+                          <div class="row gap6 wrap mt12">
+                            <span class="asset"><i data-lucide="file-text" class="ic"></i> AB 1234 brief.pdf</span>
+                            <span class="asset"><i data-lucide="link" class="ic"></i> Fresno jobs memo · Google Doc</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 3 — TRACKING LIST (Bills / Profiles / Scorecard)
+                 ============================================================ -->
+            <section class="view view-tracklist" data-ttab="profiles">
+              <div class="page">
+                <div class="breadcrumb"><span class="crumb-link" data-nav="directory">BILL TRACKING</span><span class="sep">/</span><span class="cur">CA DATA &amp; TAX</span></div>
+                <div class="page-head">
+                  <div>
+                    <div class="page-title">CA Data &amp; Tax</div>
+                    <div class="muted-sm mt6">18 bills · 6 in session · <span class="lock"><i data-lucide="lock" class="ic"></i> Visible to your whole team</span></div>
+                  </div>
+                  <div class="row gap8">
+                    <button class="btn btn-outline btn-sm is-off"><i data-lucide="sliders-horizontal" class="ic"></i> Columns</button>
+                    <button class="btn btn-outline btn-sm is-off"><i data-lucide="file-text" class="ic"></i> Create report</button>
+                  </div>
+                </div>
+
+                <div class="tabs">
+                  <div class="tab" data-ttab="bills">Bills</div>
+                  <div class="tab active hl-new" data-ttab="profiles">Profiles</div>
+                  <div class="tab is-off" data-ttab="scorecard">Voting Scorecard</div>
+                </div>
+
+                <!-- BILLS tab -->
+                <div class="ttab ttab-bills card" hidden>
+                  <table class="tbl">
+                    <thead><tr><th>Bill</th><th>Title</th><th>Progress</th><th>Priority</th><th>Position</th><th>Assignee</th><th>Labels</th></tr></thead>
+                    <tbody>
+                      <tr class="clickrow" data-nav="bill"><td><span class="chip-bill">AB 1234</span></td><td>Data Center Energy &amp; Jobs Act</td><td class="muted-sm">In committee</td><td><span class="prio prio-high"><span class="dot"></span>High</span></td><td><span class="badge badge-pos-support">Support</span></td><td><span class="chip-person"><span class="avatar av-24 av-alt2">PS</span>Priya</span></td><td><span class="chip">Data centers</span></td></tr>
+                      <tr class="clickrow" data-nav="bill"><td><span class="chip-bill">SB 302</span></td><td>Digital Services Tax Act</td><td class="muted-sm">Introduced</td><td><span class="prio prio-high"><span class="dot"></span>High</span></td><td><span class="badge badge-pos-oppose">Oppose</span></td><td><span class="chip-person"><span class="avatar av-24">AC</span>Alex</span></td><td><span class="chip">Tax</span></td></tr>
+                      <tr class="clickrow" data-nav="bill"><td><span class="chip-bill">AB 91</span></td><td>Grid Interconnection Reform</td><td class="muted-sm">Passed committee</td><td><span class="prio prio-med"><span class="dot"></span>Med</span></td><td><span class="badge badge-pos-amend">Amend</span></td><td><span class="chip-person"><span class="avatar av-24 av-alt2">PS</span>Priya</span></td><td><span class="chip">Energy</span></td></tr>
+                      <tr class="clickrow" data-nav="bill"><td><span class="chip-bill">SB 77</span></td><td>Water Use Disclosure — Large Facilities</td><td class="muted-sm">Introduced</td><td><span class="prio prio-low"><span class="dot"></span>Low</span></td><td><span class="badge badge-pos-watch">Watch</span></td><td class="muted-sm">—</td><td><span class="chip">Data centers</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- PROFILES tab (NEW pivot) -->
+                <div class="ttab ttab-profiles">
+                  <div class="infostrip mb12 hl-new"><i data-lucide="sparkles" class="ic"></i><div class="muted-sm">Anchor the list on <strong>people</strong> instead of bills. Each row is a profile in your directory; their bills in this list roll up beside them — so you see who to work and where you stand.</div></div>
+                  <div class="card">
+                    <table class="tbl">
+                      <thead><tr><th>Profile</th><th>Relationship</th><th>Their bills in this list</th><th>Last interaction</th><th>Owner</th></tr></thead>
+                      <tbody>
+                        <tr class="clickrow" data-nav="profile">
+                          <td><div class="nm"><div class="avatar av-32">MR</div><div><div class="who">Sen. Maria Ramirez</div><div class="role">Chair · Energy · <span class="badge badge-party-dem" style="font-size:8px">Dem</span></div></div></div></td>
+                          <td><span class="badge badge-tier-champion">Champion</span></td>
+                          <td><span class="chip-bill">AB 1234 · Support</span> <span class="chip-bill">SB 302 · Watch</span></td>
+                          <td class="muted-sm">2d ago · Call</td>
+                          <td><span class="chip-person"><span class="avatar av-24 av-alt2">PS</span>Priya</span></td>
+                        </tr>
+                        <tr class="clickrow" data-nav="profile">
+                          <td><div class="nm"><div class="avatar av-32 av-alt">DO</div><div><div class="who">David Osei</div><div class="role">GR Director, Acme</div></div></div></td>
+                          <td><span class="badge badge-tier-champion">Champion</span></td>
+                          <td><span class="chip-bill">AB 1234 · Support</span></td>
+                          <td class="muted-sm">6d ago · Meeting</td>
+                          <td><span class="chip-person"><span class="avatar av-24">AC</span>Alex</span></td>
+                        </tr>
+                        <tr class="clickrow" data-nav="profile">
+                          <td><div class="nm"><div class="avatar av-32 av-alt3">TB</div><div><div class="who">Rep. Thomas Beck</div><div class="role">Revenue &amp; Taxation · <span class="badge badge-party-rep" style="font-size:8px">Rep</span></div></div></div></td>
+                          <td><span class="badge badge-tier-watch">Watch</span></td>
+                          <td><span class="chip-bill">SB 302 · Oppose</span></td>
+                          <td class="muted-sm">3w ago</td>
+                          <td class="muted-sm">—</td>
+                        </tr>
+                        <tr class="clickrow" data-nav="profile">
+                          <td><div class="nm"><div class="avatar av-32 av-alt2">PN</div><div><div class="who">Sen. Priya Nair</div><div class="role">Energy · <span class="badge badge-party-dem" style="font-size:8px">Dem</span></div></div></div></td>
+                          <td><span class="badge badge-tier-bet">Bet</span></td>
+                          <td><span class="chip-bill">AB 1234 · —</span> <span class="chip-bill">AB 91 · —</span></td>
+                          <td class="muted-sm">Never</td>
+                          <td class="muted-sm">—</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- SCORECARD tab -->
+                <div class="ttab ttab-scorecard card card-pad" hidden>
+                  <div class="muted-sm">Voting Scorecard pivots legislators × bills with each member's recorded position. (Existing view — shown here for context.)</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 4 — BILL DETAIL (AB 1234)
+                 ============================================================ -->
+            <section class="view view-bill">
+              <div class="page page-wide">
+                <div class="breadcrumb"><span class="crumb-link" data-nav="tracklist">BILLS</span><span class="sep">/</span><span class="cur">CA AB 1234</span></div>
+                <div class="page-head">
+                  <div>
+                    <div class="row gap10" style="align-items:center"><div class="page-title">AB 1234 · CA</div><span class="badge badge-pos-support">Support</span></div>
+                    <div class="mt6" style="font-size:15px">Data Center Energy &amp; Jobs Act</div>
+                  </div>
+                  <div class="row gap8">
+                    <button class="btn btn-outline btn-sm is-off"><i data-lucide="message-square" class="ic"></i> Comments</button>
+                    <button class="btn btn-outline btn-sm is-off"><i data-lucide="share-2" class="ic"></i> Share</button>
+                    <button class="btn btn-tracked btn-sm"><i data-lucide="bell" class="ic"></i> Tracked</button>
+                  </div>
+                </div>
+
+                <div class="infostrip mb16"><i data-lucide="clock" class="ic"></i><div><span class="sectionlabel">Latest action</span><div class="mt6" style="font-size:13px">Re-referred to Committee on Appropriations · <span class="muted-sm">2 days ago</span></div></div></div>
+
+                <div class="two-col-bill">
+                  <div class="stack gap16">
+                    <div class="card">
+                      <div class="card-head"><span class="dot-noun" style="background:var(--n-bill)"></span><h3>Legislative Progress</h3></div>
+                      <div class="card-pad">
+                        <div class="prograil">
+                          <div class="pnode done"><div class="conn"></div><div class="dot"></div><div class="plabel">Introduced</div><div class="pdate">Feb 12</div></div>
+                          <div class="pnode done"><div class="conn"></div><div class="dot"></div><div class="plabel">Passed Assembly</div><div class="pdate">May 30</div></div>
+                          <div class="pnode cur"><div class="conn"></div><div class="dot"></div><div class="plabel">Senate committee</div><div class="pdate">now</div></div>
+                          <div class="pnode"><div class="conn"></div><div class="dot"></div><div class="plabel">Senate floor</div></div>
+                          <div class="pnode"><div class="conn"></div><div class="dot"></div><div class="plabel">Governor</div></div>
+                          <div class="pnode"><div class="conn"></div><div class="dot"></div><div class="plabel">Enacted</div></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><i data-lucide="file-text" class="ic"></i><h3>Summary</h3></div>
+                      <div class="card-pad" style="font-size:13.5px;color:#3a342a">Establishes a streamlined siting and grid-interconnection pathway for large data-center facilities, ties expedited review to in-state hiring and apprenticeship commitments, and directs the CEC to report annual jobs and energy figures by district.</div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><i data-lucide="users" class="ic"></i><h3>Sponsors <span class="muted-sm">(2 Dem, 1 Rep)</span></h3></div>
+                      <div class="card-pad">
+                        <div class="row gap10 mb12"><div class="avatar av-32">MR</div><div><div style="font-weight:600;font-size:13px" class="crumb-link" data-nav="profile">Sen. Maria Ramirez</div><div class="muted-sm">Primary · <span class="badge badge-party-dem" style="font-size:8px">Dem</span> · CA-14</div></div></div>
+                        <div class="row gap10"><div class="avatar av-32 av-alt2">JW</div><div><div style="font-weight:600;font-size:13px">Asm. Jordan Wu</div><div class="muted-sm">Co-sponsor · <span class="badge badge-party-dem" style="font-size:8px">Dem</span> · CA-19</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="stack gap16">
+                    <!-- NEW: auto-matched people -->
+                    <div class="card hl-new">
+                      <div class="card-head"><i data-lucide="user-search" class="ic"></i><h3>People you've engaged</h3></div>
+                      <div class="card-pad">
+                        <div class="muted-sm mb12">Directory profiles auto-matched to this bill — including your uploaded contacts.</div>
+                        <div class="row gap10 mb12" style="align-items:flex-start">
+                          <div class="avatar av-32">MR</div>
+                          <div class="grow"><div style="font-weight:600;font-size:13px" class="crumb-link" data-nav="profile">Sen. Maria Ramirez</div><div class="muted-sm">Sponsor · 4 interactions</div></div>
+                          <span class="badge badge-tier-champion">Champion</span>
+                        </div>
+                        <div class="row gap10 mb12" style="align-items:flex-start">
+                          <div class="avatar av-32 av-alt">DO</div>
+                          <div class="grow"><div style="font-weight:600;font-size:13px" class="crumb-link" data-nav="profile">David Osei</div><div class="muted-sm">GR Director, Acme · 2 interactions</div></div>
+                          <span class="badge badge-tier-champion">Champion</span>
+                        </div>
+                        <div class="row gap10" style="align-items:flex-start">
+                          <div class="avatar av-32 av-alt">LO</div>
+                          <div class="grow"><div style="font-weight:600;font-size:13px">Lena Ortiz</div><div class="muted-sm">TechNet · 1 interaction</div></div>
+                          <span class="badge badge-tier-watch">Watch</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><span class="dot-noun" style="background:var(--n-note)"></span><h3>Field Notes</h3><span class="muted-sm head-action">3</span></div>
+                      <div class="card-pad">
+                        <div class="note" style="border:none;padding:0">
+                          <div class="note-top"><span class="note-type"><i data-lucide="phone" class="ic" style="width:11px;height:11px"></i> Call · Ramirez</span><span class="note-time">Sep 9</span></div>
+                          <div class="note-body">Will carry amended interconnection language; wants Fresno jobs data.</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><span class="dot-noun" style="background:var(--n-hearing)"></span><h3>Upcoming hearing</h3></div>
+                      <div class="card-pad">
+                        <div style="font-weight:600;font-size:13px">Senate Appropriations — Suspense</div>
+                        <div class="muted-sm mt6"><i data-lucide="clock" class="ic" style="width:12px;height:12px;vertical-align:-2px"></i> Sep 15, 9:00 AM · Rm 4203</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 5 — AI CHAT
+                 ============================================================ -->
+            <section class="view view-chat" data-cstate="landing">
+              <div class="chat-scroll">
+                <!-- landing -->
+                <div class="chat-landing" id="chatLanding">
+                  <div class="row" style="justify-content:center;margin-bottom:6px"><span class="badge badge-new"><i data-lucide="sparkles" class="ic"></i> Now queries your Directory &amp; Field Notes</span></div>
+                  <h2>The full picture on any issue, in one place</h2>
+                  <div class="subtle">Ask across bills, hearings, news — and now your people and the notes you've logged on them.</div>
+                  <div class="prompt-grid">
+                    <div class="prompt-card" data-prompt="ramirez"><i data-lucide="sparkles" class="ic"></i><div><div class="pc-t">Where does Sen. Ramirez stand on data centers?</div><div class="pc-d">…and who on our team knows her best</div></div></div>
+                    <div class="prompt-card"><i data-lucide="users" class="ic"></i><div><div class="pc-t">Who are our Champions on AB 1234?</div><div class="pc-d">Rank tracked contacts by relationship</div></div></div>
+                    <div class="prompt-card"><i data-lucide="sticky-note" class="ic"></i><div><div class="pc-t">Summarize every interaction with Acme this quarter</div><div class="pc-d">Pull from field notes</div></div></div>
+                    <div class="prompt-card"><i data-lucide="landmark" class="ic"></i><div><div class="pc-t">Which CA data-center bills have a hearing next week?</div><div class="pc-d">With our position on each</div></div></div>
+                  </div>
+                </div>
+                <!-- thread -->
+                <div class="chat-wrap" id="chatThread" hidden>
+                  <div class="msg msg-user"><div class="bubble-user">What's Senator Ramirez's stance on data-center bills, and who on our team has the best relationship with her?</div></div>
+                  <div class="msg msg-ai">
+                    <div class="ai-id"><span class="mk"><i data-lucide="sparkles" class="ic"></i></span><span class="nm">State Affairs AI</span><span class="tm">just now</span></div>
+                    <div class="ai-body">
+                      <p><strong>Sen. Maria Ramirez (D · CA-14)</strong> is <strong>Supportive</strong> on data centers and is a <strong>Champion</strong> in your directory. She's primary sponsor of <a data-nav="bill">AB 1234 — Data Center Energy &amp; Jobs Act</a> (your position: Support) and sits on Energy where <a data-nav="bill">AB 91</a> is moving. She is <strong>cooler on the digital-services tax</strong> (<a data-nav="bill">SB 302</a>) — she reads it as a jobs risk.</p>
+                      <p><strong>Best relationship on your team:</strong> <strong>Priya Shah</strong> — 4 logged meetings, including the Aug 21 roundtable with Acme and TechNet. Your contact <strong>David Osei</strong> (Acme GR) is also a Champion and a warm intro path.</p>
+                      <div class="ai-src"><div class="st">Drawn from</div>
+                        <div class="row gap6 wrap"><span class="chip-person"><span class="avatar av-24">MR</span> Ramirez profile</span><span class="chip-bill">AB 1234</span><span class="chip-bill">SB 302</span><span class="pill"><i data-lucide="sticky-note" class="ic" style="width:12px;height:12px"></i> 6 field notes</span></div>
+                      </div>
+                      <div class="ai-actions"><button class="btn-icon btn-sm" style="border:none;background:none" title="Copy"><i data-lucide="copy" class="ic"></i></button><button class="btn-icon btn-sm" style="border:none;background:none" title="Good"><i data-lucide="thumbs-up" class="ic"></i></button><button class="btn-icon btn-sm" style="border:none;background:none" title="Bad"><i data-lucide="thumbs-down" class="ic"></i></button></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="composer">
+                <div class="composer-inner">
+                  <textarea placeholder="Ask about any policy topic, bill, person, or logged interaction…"></textarea>
+                  <div class="composer-bar">
+                    <span class="fchip"><i data-lucide="filter" class="ic"></i> All sources</span>
+                    <span class="fchip hl-new"><i data-lucide="user-search" class="ic"></i> Directory</span>
+                    <button class="btn btn-primary btn-sm" id="chatSend"><i data-lucide="send" class="ic"></i></button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 6 — CAMPAIGNS
+                 ============================================================ -->
+            <section class="view view-campaigns">
+              <div class="page">
+                <div class="page-head">
+                  <div><div class="page-title">Campaigns <span class="badge badge-new" style="vertical-align:middle">New</span></div>
+                    <div class="muted-sm mt6">Reach directory segments by email or State Affairs ad channels — and measure what lands.</div></div>
+                  <button class="btn btn-primary" id="newCampaignBtn"><i data-lucide="plus" class="ic"></i> New campaign</button>
+                </div>
+
+                <div class="stats mb16">
+                  <div class="stat"><div class="k">Active campaigns</div><div class="v">3</div></div>
+                  <div class="stat"><div class="k">Total reach</div><div class="v">1,842</div><div class="d">directory recipients</div></div>
+                  <div class="stat"><div class="k">Avg. open rate</div><div class="v">48%</div><div class="d up">▲ 6% vs last</div></div>
+                  <div class="stat"><div class="k">Ad spend</div><div class="v">$4,200</div><div class="d">$0.31 / click</div></div>
+                </div>
+
+                <div class="card mb16">
+                  <table class="tbl">
+                    <thead><tr><th>Campaign</th><th>Channel</th><th>Audience</th><th>Reach</th><th>Opens</th><th>Clicks</th><th>Cost</th></tr></thead>
+                    <tbody>
+                      <tr><td><div class="who" style="font-weight:600">Data-Center Jobs — CA legislators</div><div class="muted-sm">Sent Sep 6</div></td><td><span class="badge badge-state"><i data-lucide="mail" class="ic"></i> Email</span></td><td class="muted-sm">Energy cmte · both parties</td><td>128</td><td>72 (56%)</td><td>31</td><td class="muted-sm">—</td></tr>
+                      <tr><td><div class="who" style="font-weight:600">Small-Biz Index promo</div><div class="muted-sm">Running</div></td><td><span class="badge badge-industry"><i data-lucide="megaphone" class="ic"></i> Ads</span></td><td class="muted-sm">SA newsletter · CA</td><td>9,400</td><td>—</td><td>612</td><td>$1,900</td></tr>
+                      <tr><td><div class="who" style="font-weight:600">SB 302 opposition brief</div><div class="muted-sm">Draft</div></td><td><span class="badge badge-state"><i data-lucide="mail" class="ic"></i> Email</span></td><td class="muted-sm">Revenue &amp; Tax cmte</td><td class="muted-sm">—</td><td class="muted-sm">—</td><td class="muted-sm">—</td><td class="muted-sm">—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="card hl-new" style="max-width:560px">
+                  <div class="card-head"><i data-lucide="database" class="ic"></i><h3>Custom context for messaging</h3></div>
+                  <div class="card-pad">
+                    <div class="muted-sm mb12">Your proprietary business data by state — referenced automatically when you draft to that state's directory.</div>
+                    <div class="field"><div class="lbl">California</div><div class="val">12,400 jobs · $2.1B invested</div></div>
+                    <div class="field"><div class="lbl">Texas</div><div class="val">8,900 jobs · $1.4B invested</div></div>
+                    <button class="btn btn-outline btn-sm mt12"><i data-lucide="upload" class="ic"></i> Upload business data</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 7 — ADMIN / PERMISSIONING
+                 ============================================================ -->
+            <section class="view view-admin">
+              <div class="page page-wide">
+                <div class="page-head"><div><div class="page-title">Permissioning &amp; integrations</div><div class="muted-sm mt6">Admin controls for the Directory.</div></div></div>
+
+                <div class="card hl-new mb16">
+                  <div class="card-head"><i data-lucide="lock" class="ic"></i><h3>Profile &amp; field visibility</h3></div>
+                  <div class="card-pad">
+                    <div class="muted-sm mb12">Restrict sensitive profiles or individual custom fields to select users.</div>
+                    <table class="tbl">
+                      <thead><tr><th>Profile / field</th><th>GR Team</th><th>Analysts</th><th>All users</th></tr></thead>
+                      <tbody>
+                        <tr><td>Uploaded contacts</td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td class="muted-sm">—</td></tr>
+                        <tr><td>Field: Relationship (Champion/Bet)</td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td class="muted-sm">—</td><td class="muted-sm">—</td></tr>
+                        <tr><td>Field: Data Centers — Stance</td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td class="muted-sm">—</td></tr>
+                        <tr><td>Legislator base profiles</td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td><td><i data-lucide="check" class="ic" style="color:var(--success)"></i></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="card hl-new mb16">
+                  <div class="card-head"><i data-lucide="list-checks" class="ic"></i><h3>Required fields</h3></div>
+                  <div class="card-pad">
+                    <div class="muted-sm mb12">Fields a user must fill before saving a Directory profile. Enforced on create &amp; edit.</div>
+                    <div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span>Priority <span class="req-star">*</span></span><span class="toggle-sm on"></span></div>
+                    <div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span>Owner</span><span class="toggle-sm on"></span></div>
+                    <div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft)"><span>Relationship</span><span class="toggle-sm"></span></div>
+                    <div class="row" style="justify-content:space-between;padding:9px 0"><span>Data Centers — Stance</span><span class="toggle-sm"></span></div>
+                  </div>
+                </div>
+
+                <div class="card hl-new">
+                  <div class="card-head"><i data-lucide="calendar" class="ic"></i><h3>Integrations — 2-way calendar sync</h3></div>
+                  <div class="card-pad">
+                    <div class="muted-sm mb12">Sync meetings from your work calendar. Attendees are matched to Directory profiles; unknown attendees become new custom contacts automatically.</div>
+                    <div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-soft)"><span class="row gap10"><i data-lucide="calendar" class="ic"></i> Google Calendar — GR Team</span><button class="btn btn-outline btn-sm" data-connect>Connect</button></div>
+                    <div class="row" style="justify-content:space-between;padding:10px 0"><span class="row gap10"><i data-lucide="calendar" class="ic"></i> Microsoft Outlook</span><button class="btn btn-outline btn-sm" data-connect>Connect</button></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div><!-- /main-scroll -->
+          </div><!-- /main-body -->
+        </div><!-- /main -->
+      </div><!-- /shell -->
+
+      <!-- ===================== OVERLAYS (scoped to frame) ===================== -->
+
+      <!-- Import contacts (3-step) -->
+      <div class="overlay" id="ov-import">
+        <div class="modal wide" data-step="1">
+          <div class="modal-head"><i data-lucide="upload" class="ic"></i><h3>Import contacts</h3><button class="x" data-close><i data-lucide="x" class="ic"></i></button></div>
+          <div class="modal-body">
+            <div class="steps"><div class="step active" data-s="1"><span class="n">1</span> Upload</div><div class="step-line"></div><div class="step" data-s="2"><span class="n">2</span> Match &amp; map</div><div class="step-line"></div><div class="step" data-s="3"><span class="n">3</span> Confirm</div></div>
+
+            <div class="stepbody" data-body="1">
+              <div class="dropzone"><i data-lucide="upload-cloud" class="ic"></i><div class="mt8"><strong>acme_gr_contacts.csv</strong> · 48 rows</div><div class="muted-sm mt6">Drop a CSV exported from your CRM. We'll match to existing profiles or create new ones.</div></div>
+            </div>
+
+            <div class="stepbody" data-body="2" hidden>
+              <div class="muted-sm mb12">Map your columns to State Affairs fields. Conversation history maps to <strong>Field Notes</strong>.</div>
+              <div class="maprow"><select class="select"><option>Full name</option></select><i data-lucide="arrow-right" class="ic" style="color:var(--text-faint)"></i><span class="pill">Name</span></div>
+              <div class="maprow"><select class="select"><option>Title / Org</option></select><i data-lucide="arrow-right" class="ic" style="color:var(--text-faint)"></i><span class="pill">Role</span></div>
+              <div class="maprow"><select class="select"><option>Notes / last touch</option></select><i data-lucide="arrow-right" class="ic" style="color:var(--text-faint)"></i><span class="pill hl-new">Field Notes</span></div>
+              <div class="infostrip mt16"><i data-lucide="user-check" class="ic"></i><div class="muted-sm"><strong>34</strong> rows matched to existing profiles · <strong>14</strong> new custom contacts will be created. Matched profiles get the new data merged in.</div></div>
+            </div>
+
+            <div class="stepbody" data-body="3" hidden>
+              <div class="infostrip"><i data-lucide="check-circle" class="ic"></i><div>Ready to import <strong>48 contacts</strong> — 34 merged, 14 created. Conversation history logs as Field Notes and auto-matches to bills and hearings.</div></div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" data-close>Cancel</button><span class="spacer"></span>
+            <button class="btn btn-outline" id="importBack" hidden>Back</button>
+            <button class="btn btn-primary" id="importNext">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add profile -->
+      <div class="overlay" id="ov-addprofile">
+        <div class="modal">
+          <div class="modal-head"><i data-lucide="plus" class="ic"></i><h3>Add custom profile</h3><button class="x" data-close><i data-lucide="x" class="ic"></i></button></div>
+          <div class="modal-body">
+            <div class="formgrid">
+              <div class="fitem"><label class="formlabel">Full name <span class="req-star">*</span></label><input class="input" placeholder="e.g. David Osei"></div>
+              <div class="fitem"><label class="formlabel">Role / title</label><input class="input" placeholder="GR Director"></div>
+            </div>
+            <div class="formgrid">
+              <div class="fitem"><label class="formlabel">Organization</label><input class="input" placeholder="Acme Semiconductor"></div>
+              <div class="fitem"><label class="formlabel">Affiliation</label>
+                <select class="select"><option>Industry / contact</option><option>Democrat</option><option>Republican</option><option>Independent</option><option>Libertarian (3rd party)</option><option>Green (3rd party)</option></select>
+              </div>
+            </div>
+            <div class="fitem"><label class="formlabel">Link related bills</label><input class="input" placeholder="Search bills to link… e.g. AB 1234"></div>
+            <div class="infostrip hl-new"><i data-lucide="sparkles" class="ic"></i><div class="muted-sm">Once created, this contact auto-matches into bills, hearings and news, and is queryable in AI Chat.</div></div>
+          </div>
+          <div class="modal-foot"><button class="btn btn-ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn btn-primary" data-create-profile>Create profile</button></div>
+        </div>
+      </div>
+
+      <!-- Add field -->
+      <div class="overlay" id="ov-addfield">
+        <div class="modal">
+          <div class="modal-head"><i data-lucide="sliders-horizontal" class="ic"></i><h3>Add custom field</h3><button class="x" data-close><i data-lucide="x" class="ic"></i></button></div>
+          <div class="modal-body">
+            <div class="fitem"><label class="formlabel">Field name</label><input class="input" placeholder="e.g. Digital Tax — Stance" value="Digital Tax — Stance"></div>
+            <div class="formgrid">
+              <div class="fitem"><label class="formlabel">Type</label><select class="select"><option>Single select</option><option>Text</option><option>Multi-select</option><option>Date</option><option>User</option><option>Relationship tier</option></select></div>
+              <div class="fitem"><label class="formlabel">Applies to</label><select class="select"><option>Directory profiles</option><option>Bills</option><option>Hearings</option></select></div>
+            </div>
+            <div class="row" style="justify-content:space-between;padding:9px 0;border-top:1px solid var(--border-soft)"><span>Required to save <span class="muted-sm">— enforce on create/edit</span></span><span class="toggle-sm"></span></div>
+            <div class="fitem mt12"><label class="formlabel">Visible to</label><select class="select"><option>GR Team only</option><option>GR Team + Analysts</option><option>All users</option></select></div>
+            <div class="infostrip hl-new"><i data-lucide="sparkles" class="ic"></i><div class="muted-sm">Select-type fields can be auto-filled by AI across your directory (e.g. a policy stance).</div></div>
+          </div>
+          <div class="modal-foot"><button class="btn btn-ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn btn-primary" data-create-field>Add field</button></div>
+        </div>
+      </div>
+
+      <!-- Add note slide-in -->
+      <div class="slidein" id="notePanel">
+        <div class="slidein-head"><span class="dot-noun" style="background:var(--n-note)"></span><h3>New field note</h3><button class="x" data-close><i data-lucide="x" class="ic"></i></button></div>
+        <div class="slidein-body">
+          <div class="fitem"><label class="formlabel">Type</label><select class="select"><option>Call</option><option>Meeting</option><option>Email</option><option>Event</option></select></div>
+          <div class="fitem"><label class="formlabel">Note</label><textarea class="input" rows="5" id="noteText" placeholder="What was discussed…">Follow-up call — Ramirez asked for the Fresno jobs one-pager before Friday's floor vote. She's a firm yes on AB 1234.</textarea></div>
+          <div class="fitem"><label class="formlabel">People</label><div class="row gap6 wrap"><span class="chip-person"><span class="avatar av-24">MR</span> Maria Ramirez</span><span class="pill" style="cursor:pointer">+ add</span></div></div>
+          <div class="fitem"><label class="formlabel">Bills</label><div class="row gap6 wrap"><span class="chip-bill">AB 1234</span><span class="pill" style="cursor:pointer">+ add</span></div></div>
+          <div class="fitem"><label class="formlabel">Visibility</label><select class="select"><option>GR Team</option><option>Only me</option><option>All users</option></select></div>
+        </div>
+        <div class="slidein-foot"><button class="btn btn-ghost grow" data-close>Cancel</button><button class="btn btn-primary grow" id="saveNote"><i data-lucide="check" class="ic"></i> Save note</button></div>
+      </div>
+
+      <!-- Why popover -->
+      <div class="popover" id="pop-why">
+        <h4>Why "Supportive"?</h4>
+        <div class="srcline"><i data-lucide="scroll-text" class="ic"></i><div>Primary sponsor of <strong>AB 1234</strong> (Data Center Energy &amp; Jobs Act).</div></div>
+        <div class="srcline"><i data-lucide="sticky-note" class="ic"></i><div>Field note (Sep 9): "will carry amended interconnection language."</div></div>
+        <div class="srcline"><i data-lucide="newspaper" class="ic"></i><div>Floor statement, May 30: praised data-center hiring commitments.</div></div>
+        <div class="muted-sm mt12" style="border-top:1px solid var(--border-soft);padding-top:8px">AI suggestion · review before relying on it.</div>
+      </div>
+
+      <!-- AI context popover -->
+      <div class="popover" id="pop-aictx">
+        <h4>Point AI to context</h4>
+        <div class="muted-sm mb12">Which sources should AI read to fill the empty fields?</div>
+        <label class="checkline"><input type="checkbox" checked><i data-lucide="scroll-text" class="ic"></i> Tracked &amp; sponsored bills</label>
+        <label class="checkline"><input type="checkbox" checked><i data-lucide="sticky-note" class="ic"></i> Field notes (6)</label>
+        <label class="checkline"><input type="checkbox"><i data-lucide="newspaper" class="ic"></i> Related news</label>
+        <label class="checkline"><input type="checkbox"><i data-lucide="file-text" class="ic"></i> Uploaded documents</label>
+        <button class="btn btn-primary btn-sm mt8" id="runAi" style="width:100%"><i data-lucide="sparkles" class="ic"></i> Run AI</button>
+      </div>
+
+    </div><!-- /frame-content -->
+  </div><!-- /viewport-frame -->
+</div><!-- /workspace -->
+
+<div class="toast" id="toast"><i data-lucide="check-circle" class="ic"></i><span id="toastMsg">Done</span></div>
+
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var shell = document.getElementById('shell');
+  var workspace = document.getElementById('workspace');
+  var mainScroll = document.getElementById('mainScroll');
+
+  /* ---------- view switching ---------- */
+  var NAV_TO_SIDEBAR = { directory:'directory', profile:'directory', tracklist:'tracklist', bill:'tracklist', chat:'chat', campaigns:'campaigns' };
+  function closeTransient(){
+    document.querySelectorAll('.overlay.open').forEach(function(o){o.classList.remove('open');});
+    document.querySelectorAll('.popover.open').forEach(function(p){p.classList.remove('open');});
+    var np = document.getElementById('notePanel'); if(np) np.classList.remove('open');
+    var jm = document.getElementById('jumpMenu'); if(jm) jm.classList.remove('open');
+  }
+  function setView(view){
+    if(!view) return;
+    closeTransient();
+    shell.setAttribute('data-view', view);
+    if(view==='profile') shell.classList.remove('dock-collapsed'); // dock always greets you on a profile
+    if(mainScroll) mainScroll.scrollTop = 0;
+    // sidebar active state
+    document.querySelectorAll('.sidebar .nav-item').forEach(function(n){ n.classList.remove('active'); });
+    document.querySelectorAll('.sidebar .nav-subitem').forEach(function(n){ n.classList.remove('active'); });
+    var sidebarKey = NAV_TO_SIDEBAR[view];
+    if(sidebarKey){
+      var item = document.querySelector('.sidebar [data-nav="'+sidebarKey+'"]');
+      if(item){ if(item.classList.contains('nav-subitem')) item.classList.add('active'); else item.classList.add('active'); }
+    }
+    if(view==='directory'){ var d=document.querySelector('.sidebar .nav-item[data-nav="directory"]'); if(d) d.classList.add('active'); }
+  }
+  // any element with data-nav navigates
+  document.addEventListener('click', function(e){
+    var nav = e.target.closest('[data-nav]');
+    if(nav){ e.preventDefault(); setView(nav.getAttribute('data-nav')); }
+  });
+
+  /* ---------- jump menu ---------- */
+  var jumpBtn = document.getElementById('jumpBtn');
+  var jumpMenu = document.getElementById('jumpMenu');
+  jumpBtn.addEventListener('click', function(e){ e.stopPropagation(); jumpMenu.classList.toggle('open'); });
+  document.addEventListener('click', function(e){ if(!e.target.closest('.jump')) jumpMenu.classList.remove('open'); });
+  jumpMenu.querySelectorAll('[data-jump]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-jump');
+      jumpMenu.classList.remove('open');
+      if(t==='import'){ setView('directory'); openOverlay('ov-import'); }
+      else setView(t);
+    });
+  });
+
+  /* ---------- viewport switcher ---------- */
+  document.querySelectorAll('.tb-group [data-w]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.documentElement.style.setProperty('--frame-width', b.getAttribute('data-w')+'px');
+      document.querySelectorAll('.tb-group [data-w]').forEach(function(x){x.classList.toggle('active', x===b);});
+    });
+  });
+
+  /* ---------- highlight new ---------- */
+  document.getElementById('hlToggle').addEventListener('click', function(){
+    this.classList.toggle('on');
+    workspace.classList.toggle('show-new', this.classList.contains('on'));
+  });
+
+  /* ---------- bill tracking submenu collapse ---------- */
+  var btNav = document.getElementById('btNav'), btSub = document.getElementById('btSub');
+  btNav.addEventListener('click', function(){
+    if(shell.classList.contains('sb-collapsed')){ shell.classList.remove('sb-collapsed'); return; }
+    btSub.hidden = !btSub.hidden;
+  });
+
+  /* ---------- sidebar collapse ---------- */
+  var sbToggle = document.getElementById('sbToggle');
+  if(sbToggle) sbToggle.addEventListener('click', function(){ shell.classList.toggle('sb-collapsed'); });
+
+  /* ---------- overlays ---------- */
+  function openOverlay(id){ var o=document.getElementById(id); if(o) o.classList.add('open'); }
+  document.addEventListener('click', function(e){
+    if(e.target.closest('[data-close]')){ var ov=e.target.closest('.overlay'); if(ov) ov.classList.remove('open'); var si=e.target.closest('.slidein'); if(si) si.classList.remove('open'); }
+    if(e.target.classList && e.target.classList.contains('overlay')){ e.target.classList.remove('open'); }
+  });
+  document.getElementById('importBtn').addEventListener('click', function(){ resetImport(); openOverlay('ov-import'); });
+  document.getElementById('addProfileBtn').addEventListener('click', function(){ openOverlay('ov-addprofile'); });
+  document.getElementById('addFieldBtn').addEventListener('click', function(){ openOverlay('ov-addfield'); });
+
+  /* ---------- import wizard ---------- */
+  var importStep = 1;
+  var importModal = document.querySelector('#ov-import .modal');
+  function renderImport(){
+    importModal.setAttribute('data-step', importStep);
+    for(var i=1;i<=3;i++){
+      var body = importModal.querySelector('[data-body="'+i+'"]'); if(body) body.hidden = (i!==importStep);
+      var st = importModal.querySelector('.step[data-s="'+i+'"]');
+      if(st){ st.classList.toggle('active', i===importStep); st.classList.toggle('done', i<importStep); }
+    }
+    document.getElementById('importBack').hidden = (importStep===1);
+    document.getElementById('importNext').textContent = (importStep===3) ? 'Import 48 contacts' : 'Continue';
+  }
+  function resetImport(){ importStep=1; renderImport(); }
+  document.getElementById('importNext').addEventListener('click', function(){
+    if(importStep<3){ importStep++; renderImport(); }
+    else { document.getElementById('ov-import').classList.remove('open'); toast('48 contacts imported — 14 profiles created'); }
+  });
+  document.getElementById('importBack').addEventListener('click', function(){ if(importStep>1){ importStep--; renderImport(); } });
+
+  /* ---------- add profile / field ---------- */
+  document.querySelector('[data-create-profile]').addEventListener('click', function(){ document.getElementById('ov-addprofile').classList.remove('open'); toast('Profile created — auto-matching to bills…'); });
+  document.querySelector('[data-create-field]').addEventListener('click', function(){ document.getElementById('ov-addfield').classList.remove('open'); toast('Custom field added to Directory profiles'); });
+
+  /* ---------- AI auto-fill flow ---------- */
+  var popAi = document.getElementById('pop-aictx');
+  document.getElementById('autofillBtn').addEventListener('click', function(e){ e.stopPropagation(); placePopover(popAi, this); popAi.classList.add('open'); });
+  document.getElementById('runAi').addEventListener('click', function(){
+    popAi.classList.remove('open');
+    var val = document.getElementById('digitalTaxVal');
+    val.innerHTML = '<span class="ai-pending">Analyzing 2 bills + 6 notes…</span>';
+    setTimeout(function(){
+      val.innerHTML = '<strong>Likely Opposed</strong> <span class="badge badge-ai" data-why="tax"><i data-lucide="sparkles"></i> AI</span> '
+        + '<button class="btn btn-primary btn-xs" id="acceptTax"><i data-lucide="check"></i> Accept</button> '
+        + '<button class="btn btn-outline btn-xs">Edit</button>';
+      if(window.lucide) lucide.createIcons();
+      document.getElementById('acceptTax').addEventListener('click', function(){
+        val.innerHTML = '<strong>Opposed</strong> <span class="badge badge-ai" data-why="tax"><i data-lucide="sparkles"></i> AI</span>';
+        if(window.lucide) lucide.createIcons();
+        toast('AI suggestion accepted');
+      });
+    }, 900);
+  });
+
+  /* ---------- Why popover (delegated for dynamic badges) ---------- */
+  var popWhy = document.getElementById('pop-why');
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-why]');
+    if(b){ e.stopPropagation(); placePopover(popWhy, b); popWhy.classList.add('open'); }
+    else if(!e.target.closest('.popover')){ document.querySelectorAll('.popover.open').forEach(function(p){p.classList.remove('open');}); }
+  });
+  function placePopover(pop, anchor){
+    var r = anchor.getBoundingClientRect();
+    pop.style.visibility='hidden'; pop.classList.add('open');
+    var pw = pop.offsetWidth, ph = pop.offsetHeight;
+    pop.classList.remove('open'); pop.style.visibility='';
+    var left = Math.min(r.left, window.innerWidth - pw - 12);
+    var top = r.bottom + 8;
+    if(top + ph > window.innerHeight - 12) top = r.top - ph - 8;
+    pop.style.left = Math.max(12,left)+'px';
+    pop.style.top = Math.max(12,top)+'px';
+  }
+
+  /* ---------- add note slide-in ---------- */
+  document.getElementById('addNoteBtn').addEventListener('click', function(){ document.getElementById('notePanel').classList.add('open'); });
+  document.getElementById('saveNote').addEventListener('click', function(){
+    var txt = document.getElementById('noteText').value.trim() || 'Note logged.';
+    var list = document.getElementById('noteList');
+    var note = document.createElement('div');
+    note.className = 'note';
+    note.innerHTML = '<div class="note-top"><span class="note-type"><i data-lucide="phone"></i> Call</span><span class="note-time">just now</span></div>'
+      + '<div class="note-body">'+escapeHtml(txt)+'</div>'
+      + '<div class="note-links"><span class="chip-person"><span class="avatar av-24">MR</span> Maria Ramirez</span><span class="chip-bill" data-nav="bill"><span class="dot-noun" style="background:var(--n-bill)"></span>AB 1234</span></div>';
+    list.insertBefore(note, list.firstChild);
+    if(window.lucide) lucide.createIcons();
+    document.getElementById('notePanel').classList.remove('open');
+    toast('Field note saved — matched to Ramirez &amp; AB 1234');
+  });
+
+  /* ---------- meeting prep ---------- */
+  document.getElementById('prepBtn').addEventListener('click', function(){
+    var box = document.getElementById('prepBox');
+    box.hidden = !box.hidden;
+    this.innerHTML = box.hidden ? '<i data-lucide="sparkles"></i> Prep me' : '<i data-lucide="x"></i> Hide';
+    if(window.lucide) lucide.createIcons();
+  });
+
+  /* ---------- tracklist tabs ---------- */
+  var tlView = document.querySelector('.view-tracklist');
+  tlView.querySelectorAll('.tab[data-ttab]').forEach(function(t){
+    t.addEventListener('click', function(){
+      var key = t.getAttribute('data-ttab');
+      tlView.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('active', x===t);});
+      tlView.querySelectorAll('.ttab').forEach(function(p){ p.hidden = !p.classList.contains('ttab-'+key); });
+    });
+  });
+
+  /* ---------- chat prompt -> thread ---------- */
+  function showThread(){ document.getElementById('chatLanding').hidden = true; document.getElementById('chatThread').hidden = false; }
+  document.querySelectorAll('.prompt-card').forEach(function(c){ c.addEventListener('click', showThread); });
+  document.getElementById('chatSend').addEventListener('click', showThread);
+
+  /* ---------- docked profile AI chat ---------- */
+  function showDockThread(){
+    var l=document.getElementById('dockLanding'), t=document.getElementById('dockThread');
+    if(l) l.hidden=true; if(t) t.hidden=false;
+  }
+  document.querySelectorAll('[data-dprompt]').forEach(function(c){ c.addEventListener('click', showDockThread); });
+  var dSend=document.getElementById('dockSend'); if(dSend) dSend.addEventListener('click', showDockThread);
+  var dHide=document.getElementById('dockHideBtn'); if(dHide) dHide.addEventListener('click', function(){ shell.classList.add('dock-collapsed'); });
+  var dReopen=document.getElementById('dockReopen'); if(dReopen) dReopen.addEventListener('click', function(){ shell.classList.remove('dock-collapsed'); });
+
+  /* ---------- calendar connect ---------- */
+  document.querySelectorAll('[data-connect]').forEach(function(b){
+    b.addEventListener('click', function(){
+      b.textContent='Connected'; b.classList.remove('btn-outline'); b.classList.add('btn-gold');
+      toast('Calendar connected — meetings will sync to profiles');
+    });
+  });
+
+  /* ---------- required-field toggles ---------- */
+  document.querySelectorAll('.toggle-sm').forEach(function(t){ t.addEventListener('click', function(){ t.classList.toggle('on'); }); });
+
+  /* ---------- new campaign ---------- */
+  var nc = document.getElementById('newCampaignBtn'); if(nc) nc.addEventListener('click', function(){ toast('Campaign builder opens here — pick a Directory segment to start'); });
+
+  /* ---------- toast ---------- */
+  var toastEl = document.getElementById('toast'), toastMsg = document.getElementById('toastMsg'), toastTimer;
+  function toast(msg){ toastMsg.innerHTML = msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(function(){toastEl.classList.remove('show');},2600); }
+
+  function escapeHtml(s){ return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  /* ---------- prototype notes (drag + collapse) ---------- */
+  (function(){
+    var note=document.getElementById('proto-note'); if(!note) return;
+    note.classList.add('collapsed');
+    var didDrag=false, dragging=false, sx, sy, ol, ot;
+    note.addEventListener('click', function(){ if(didDrag) return; var c=note.classList.toggle('collapsed'); var t=note.querySelector('.proto-note-toggle'); if(t) t.textContent=c?'▼':'▲'; });
+    note.addEventListener('mousedown', function(e){ dragging=true; didDrag=false; note.classList.add('dragging'); var r=note.getBoundingClientRect(); ol=r.left; ot=r.top; sx=e.clientX; sy=e.clientY; note.style.left=ol+'px'; note.style.top=ot+'px'; note.style.right='auto'; });
+    document.addEventListener('mousemove', function(e){ if(!dragging) return; var dx=e.clientX-sx, dy=e.clientY-sy; if(Math.abs(dx)>3||Math.abs(dy)>3) didDrag=true; note.style.left=(ol+dx)+'px'; note.style.top=(ot+dy)+'px'; });
+    document.addEventListener('mouseup', function(){ dragging=false; note.classList.remove('dragging'); });
+  })();
+
+  /* ---------- init ---------- */
+  renderImport();
+  if(window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>
